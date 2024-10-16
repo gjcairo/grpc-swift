@@ -32,7 +32,7 @@ extension ClientRPCExecutor {
     @usableFromInline
     let deadline: ContinuousClock.Instant?
     @usableFromInline
-    let interceptors: [any ClientInterceptor]
+    let interceptors: [ClientInterceptorTarget]
     @usableFromInline
     let serializer: Serializer
     @usableFromInline
@@ -45,7 +45,7 @@ extension ClientRPCExecutor {
       transport: Transport,
       policy: HedgingPolicy,
       deadline: ContinuousClock.Instant?,
-      interceptors: [any ClientInterceptor],
+      interceptors: [ClientInterceptorTarget],
       serializer: Serializer,
       deserializer: Deserializer,
       bufferSize: Int

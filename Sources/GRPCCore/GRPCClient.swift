@@ -118,7 +118,7 @@ public final class GRPCClient: Sendable {
   /// first interceptor added will be the first interceptor to intercept each request. The last
   /// interceptor added will be the final interceptor to intercept each request before calling
   /// the appropriate handler.
-  private let interceptors: [any ClientInterceptor]
+  private let interceptors: [ClientInterceptorTarget]
 
   /// The current state of the client.
   private let state: Mutex<State>
@@ -198,7 +198,7 @@ public final class GRPCClient: Sendable {
   ///       request before calling the appropriate handler.
   public init(
     transport: some ClientTransport,
-    interceptors: [any ClientInterceptor] = []
+    interceptors: [ClientInterceptorTarget] = []
   ) {
     self.transport = transport
     self.interceptors = interceptors

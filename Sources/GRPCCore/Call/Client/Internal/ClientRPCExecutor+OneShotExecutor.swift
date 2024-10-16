@@ -30,7 +30,7 @@ extension ClientRPCExecutor {
     @usableFromInline
     let deadline: ContinuousClock.Instant?
     @usableFromInline
-    let interceptors: [any ClientInterceptor]
+    let interceptors: [ClientInterceptorTarget]
     @usableFromInline
     let serializer: Serializer
     @usableFromInline
@@ -40,7 +40,7 @@ extension ClientRPCExecutor {
     init(
       transport: Transport,
       deadline: ContinuousClock.Instant?,
-      interceptors: [any ClientInterceptor],
+      interceptors: [ClientInterceptorTarget],
       serializer: Serializer,
       deserializer: Deserializer
     ) {

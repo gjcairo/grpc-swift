@@ -38,7 +38,7 @@ enum ClientRPCExecutor {
     serializer: some MessageSerializer<Input>,
     deserializer: some MessageDeserializer<Output>,
     transport: some ClientTransport,
-    interceptors: [any ClientInterceptor],
+    interceptors: [ClientInterceptorTarget],
     handler: @Sendable @escaping (StreamingClientResponse<Output>) async throws -> Result
   ) async throws -> Result {
     let deadline = options.timeout.map { ContinuousClock.now + $0 }
@@ -119,7 +119,7 @@ extension ClientRPCExecutor {
     attempt: Int,
     serializer: some MessageSerializer<Input>,
     deserializer: some MessageDeserializer<Output>,
-    interceptors: [any ClientInterceptor],
+    interceptors: [ClientInterceptorTarget],
     stream: RPCStream<ClientTransport.Inbound, ClientTransport.Outbound>
   ) async -> StreamingClientResponse<Output> {
     let context = ClientContext(descriptor: method)
@@ -159,7 +159,7 @@ extension ClientRPCExecutor {
     in group: inout TaskGroup<Void>,
     request: StreamingClientRequest<Input>,
     context: ClientContext,
-    iterator: Array<any ClientInterceptor>.Iterator,
+    iterator: Array<ClientInterceptorTarget>.Iterator,
     finally: (
       _ group: inout TaskGroup<Void>,
       _ request: StreamingClientRequest<Input>,
@@ -169,23 +169,36 @@ extension ClientRPCExecutor {
     var iterator = iterator
 
     switch iterator.next() {
-    case .some(let interceptor):
-      let iter = iterator
-      do {
-        return try await interceptor.intercept(request: request, context: context) {
-          await self._intercept(
-            in: &group,
-            request: $0,
-            context: $1,
-            iterator: iter,
-            finally: finally
-          )
+    case .some(let interceptorTarget):
+      if interceptorTarget.applies(to: context.descriptor) {
+        let iter = iterator
+        do {
+          return try await interceptorTarget.interceptor.intercept(
+            request: request,
+            context: context
+          ) {
+            await self._intercept(
+              in: &group,
+              request: $0,
+              context: $1,
+              iterator: iter,
+              finally: finally
+            )
+          }
+        } catch let error as RPCError {
+          return StreamingClientResponse(error: error)
+        } catch let other {
+          let error = RPCError(code: .unknown, message: "", cause: other)
+          return StreamingClientResponse(error: error)
         }
-      } catch let error as RPCError {
-        return StreamingClientResponse(error: error)
-      } catch let other {
-        let error = RPCError(code: .unknown, message: "", cause: other)
-        return StreamingClientResponse(error: error)
+      } else {
+        return await self._intercept(
+          in: &group,
+          request: request,
+          context: context,
+          iterator: iterator,
+          finally: finally
+        )
       }
 
     case .none:
