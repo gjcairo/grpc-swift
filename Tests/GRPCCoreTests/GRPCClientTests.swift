@@ -89,7 +89,7 @@ final class GRPCClientTests: XCTestCase {
         deserializer: IdentityDeserializer(),
         options: .defaults
       ) { response in
-        var responseParts = response.messages.makeAsyncIterator()
+        var responseParts = try response.messages.makeAsyncIterator()
         for byte in [3, 1, 4, 1, 5] as [UInt8] {
           let message = try await responseParts.next()
           XCTAssertEqual(message, [byte])
@@ -111,7 +111,7 @@ final class GRPCClientTests: XCTestCase {
         deserializer: IdentityDeserializer(),
         options: .defaults
       ) { response in
-        var responseParts = response.messages.makeAsyncIterator()
+        var responseParts = try response.messages.makeAsyncIterator()
         for byte in [3, 1, 4, 1, 5] as [UInt8] {
           let message = try await responseParts.next()
           XCTAssertEqual(message, [byte])

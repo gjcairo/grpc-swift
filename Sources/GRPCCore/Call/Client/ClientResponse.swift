@@ -363,23 +363,25 @@ extension StreamingClientResponse {
 
   /// Returns the messages received from the server.
   ///
-  /// For rejected RPCs the `RPCAsyncSequence` throws a `RPCError``.
+  /// For rejected RPCs (in other words, where ``accepted`` is `failure`), this method throws an `RPCError`.
   public var messages: RPCAsyncSequence<Message, any Error> {
-    switch self.accepted {
-    case let .success(contents):
-      let filtered = contents.bodyParts.compactMap {
-        switch $0 {
-        case let .message(message):
-          return message
-        case .trailingMetadata:
-          return nil
+    get throws {
+      switch self.accepted {
+      case let .success(contents):
+        let filtered = contents.bodyParts.compactMap {
+          switch $0 {
+          case let .message(message):
+            return message
+          case .trailingMetadata:
+            return nil
+          }
         }
+
+        return RPCAsyncSequence(wrapping: filtered)
+
+      case let .failure(error):
+        throw error
       }
-
-      return RPCAsyncSequence(wrapping: filtered)
-
-    case let .failure(error):
-      return RPCAsyncSequence.throwing(error)
     }
   }
 

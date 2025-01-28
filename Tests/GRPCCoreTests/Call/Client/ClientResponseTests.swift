@@ -102,7 +102,7 @@ final class ClientResponseTests: XCTestCase {
 
     XCTAssertEqual(response.metadata, [:])
     await XCTAssertThrowsRPCErrorAsync {
-      try await response.messages.collect()
+      try response.messages
     } errorHandler: {
       XCTAssertEqual($0, error)
     }
